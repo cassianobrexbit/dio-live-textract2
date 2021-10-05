@@ -45,5 +45,5 @@ Repositório de código para o live coding do dia 05/10/2021 sobre extração de
 ### Configurando permissões no Lambda para o DynamoDB
 
 - Lambda Console -> Functions -> Selecione a função criada -> Configuration -> Permission -> Execution Role -> Abrir a role criada no Amazon IAM
-- No IAM -> Permission -> Add inline policy -> Choose a service "DynamoDB" -> Write "PutItem"
+- No IAM -> Permission -> Add inline policy -> Choose a service "DynamoDB" -> Write "BatchWriteItem"
 - Resources -> Selecionar o Arn da sua tabela -> Selecionar a sua região -> Add -> Review Policy -> Name "LambdaDynamoDBPolicy" -> Create policy
