@@ -5,9 +5,10 @@ import csv
 import codecs
 import sys
 import urllib.parse
+
 s3 = boto3.resource('s3')
 dynamodb = boto3.resource('dynamodb')
-tableName = "DIOTableTest"
+tableName = "nome_da_tabela"
 
 
 def lambda_handler(event, context):
@@ -20,11 +21,11 @@ def lambda_handler(event, context):
     try:
         obj = s3.Object(bucket, key).get()['Body']
     except:
-        print('S3 Object could not be opened ')
+        print('Falha ao obter arquivo do S3')
     try:
         table = dynamodb.Table(tableName)
     except:
-        print('Error loading DynamoDB table')
+        print('Falha ao acessar a tabela no DynamoDB')
 
     batch_size = 100
     batch = []
@@ -42,7 +43,7 @@ def lambda_handler(event, context):
 
     return {
         'statusCode': 200,
-        'body': json.dumps('Uploaded to DynamoDB Table')
+        'body': json.dumps('Dados enviados ao DynamoDB')
     }
 
     
@@ -50,7 +51,7 @@ def write_to_dynamo(rows):
     try:
         table = dynamodb.Table(tableName)
     except:
-        print('Falha ao identificar a tabela do DynamoDB')
+        print('Falha ao acessar tabela no DynamoDB')
 
     try:
         with table.batch_writer() as batch:
@@ -59,5 +60,5 @@ def write_to_dynamo(rows):
                 Item=rows[i]
             )
     except Exception as e:
-        print('Error executing batch_writer')
+        print('Erro ao executar inserção dos dados no DynamoDB')
         print(e)
