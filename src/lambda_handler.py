@@ -1,64 +1,53 @@
 import json
 import boto3
-import os
-import csv
-import codecs
-import sys
-import urllib.parse
 
-s3 = boto3.resource('s3')
-dynamodb = boto3.resource('dynamodb')
-tableName = "nome_da_tabela"
+# instanciar serviços da AWS com a biblioteca boto3
+s3_client = boto3.client("s3")
+dynamodb = boto3.resource("dynamodb")
 
+# declarar a tabela do DynamoDB de destino
+invoice_table = dynamodb.Table("Fatura")
 
 def lambda_handler(event, context):
-
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
     
-
-    #get() does not store in memory
-    try:
-        obj = s3.Object(bucket, key).get()['Body']
-    except:
-        print('Falha ao obter arquivo do S3')
-    try:
-        table = dynamodb.Table(tableName)
-    except:
-        print('Falha ao acessar a tabela no DynamoDB')
-
-    batch_size = 100
-    batch = []
-
-    #DictReader is a generator; not stored in memory
-    for row in csv.DictReader(codecs.getreader('utf-8')(obj)):
-        if len(batch) >= batch_size:
-            write_to_dynamo(batch)
-            batch.clear()
-
-        batch.append(row)
-
-    if batch:
-        write_to_dynamo(batch)
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps('Dados enviados ao DynamoDB')
-    }
-
+    # obter o nome do bucket de origem do arquivo
+    source_bucket = event['Records'][0]['s3']['bucket']['name']
     
-def write_to_dynamo(rows):
-    try:
-        table = dynamodb.Table(tableName)
-    except:
-        print('Falha ao acessar tabela no DynamoDB')
-
-    try:
-        with table.batch_writer() as batch:
-            for i in range(len(rows)):
-                batch.put_item(
-                Item=rows[i]
-            )
-    except Exception as e:
-        print('Erro ao executar inserção dos dados no DynamoDB')
-        print(e)
+    # obter o nome do arquivo a ser processado
+    file_name = event['Records'][0]['s3']['object']['key']
+    
+    # buscar no bucket S3 o arquivo a ser processado
+    file_object = s3_client.get_object(Bucket = source_bucket, Key = file_name)
+    
+    # extrair o conteúdo do arquivo obtido
+    file_content = file_object['Body'].read().decode("utf-8")
+    
+    # cria uma lista e cada índice da lista é delimitado por uma quebra de linha
+    orders = file_content.split("\n")
+    
+    # varre a lista desprezando o primeiro índice (cabeçalho) e o último (nesse caso é item vazio) inserindo os itens no DynamoDB
+    for order in orders[1:-1]:
+        
+        # uma segunda lista é criada com os itens da linha, delimitados pelo caracter da vírgula
+        data = order.split(",")
+        
+        # atribui os itens da lista às variáveis que serão registradas no DynamoDB
+        cod = data[0]
+        item = data[1]
+        quantidade = data[2]
+        unMed = data[3]
+        valorUn = data[4]
+        valorTotal = data[5]
+        
+        # envia o item para o DynamoDB
+        invoice_table.put_item(
+        Item = {
+            "cod" : cod.replace('"', ""),
+            "item" : item.replace('"', ""),
+            "quantidade" : quantidade.replace('"', ""),
+            "unMed" : unMed.replace('"', ""),
+            "valorUn" : valorUn.replace('"', ""),
+            "valorTotal": valorTotal.replace('"', "")
+        }
+        )
+        
