@@ -6,7 +6,7 @@ s3_client = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
 
 # declarar a tabela do DynamoDB de destino
-invoice_table = dynamodb.Table("Fatura")
+invoice_table = dynamodb.Table("nome_da_tabela")
 
 def lambda_handler(event, context):
     
