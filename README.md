@@ -21,7 +21,7 @@ Repositório de código para o live coding do dia 05/10/2021 sobre extração de
 
 ### Criando uma tabela no DynamoDB
 
-- DynamoDB Console -> Tables -> Create Table -> Partition key "Indice" -> Create table
+- DynamoDB Console -> Tables -> Create Table -> Partition key "cod" -> Create table
 
 ### Implementando a função lambda
 
